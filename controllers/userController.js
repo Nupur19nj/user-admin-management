@@ -49,7 +49,22 @@ export const register = async (req, res) => {
     }
 };
 
-export const verifyOTP = async (req, res) => {};
+export const verifyOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        const validOTP = await OTPModel.findOne({ email, otp });
+        if (!validOTP) return res.status(400).json({ message: 'Invalid OTP' });
+
+        await UserModel.updateOne({ email }, { isVerified: true });
+
+        await OTPModel.deleteOne({ email, otp });
+
+        res.status(200).json({ message: 'User verified successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 export const login = async (req, res) => {};
 
