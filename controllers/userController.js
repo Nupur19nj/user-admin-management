@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import UserModel from '../models/User.model.js';
 import OTPModel from '../models/OTP.model.js';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -66,8 +67,41 @@ export const verifyOTP = async (req, res) => {
     }
 };
 
-export const login = async (req, res) => {};
+export const login = async (req, res) => {
+    try {
+        const { usernameOrEmail, password } = req.body;
 
-export const getUser = async (req, res) => {};
+        const user = await UserModel.findOne({ $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }] });
+        if (!user) return res.status(400).json({ message: 'User not found' });
 
-export const updateUser = async (req, res) => {};
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return res.status(400).json({ message: 'Invalid password' });
+
+        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.header('Authorization', `Bearer ${token}`).json({ message: 'Logged in successfully', token });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getUser = async (req, res) => {
+    try {
+        const user = await UserModel.findById(req.user._id).select('-password');
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const updateUser = async (req, res) => {
+    try {
+        const { location, age, work, dob, description } = req.body;
+        const updatedData = { location, age, work, dob, description };
+
+        const user = await UserModel.findByIdAndUpdate(req.user._id, updatedData, { new: true }).select('-password');
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
