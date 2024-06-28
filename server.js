@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ const db = mongoose.connection;
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Start server
 app.listen(PORT, () => {
